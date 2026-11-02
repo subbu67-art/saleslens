@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Sales dashboard</h1>
+    <p class="muted">
+      {{ report.summary.date_from }} to {{ report.summary.date_to }}
+      &nbsp;|&nbsp; {{ "Your uploaded file" if using_upload else "Sample data" }}
+    </p>
+  </div>
+  {% if using_upload %}
+    <a class="button secondary" href="{{ url_for('reset') }}">Use sample data</a>
+  {% endif %}
+</section>
+
+<section class="stats" aria-label="Key figures">
+  <div class="stat">
+    <span class="stat-label">Total revenue</span>
+    <span class="stat-value" id="stat-revenue"></span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Units sold</span>
+    <span class="stat-value" id="stat-units"></span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Orders</span>
+    <span class="stat-value" id="stat-orders"></span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Average order value</span>
+    <span class="stat-value" id="stat-aov"></span>
+  </div>
+</section>
+
+<section class="charts">
+  <figure class="chart wide">
+    <figcaption>Revenue by month</figcaption>
+    <div class="canvas-box"><canvas id="monthlyChart"></canvas></div>
+  </figure>
+  <figure class="chart">
+    <figcaption>Top 5 products by revenue</figcaption>
+    <div class="canvas-box"><canvas id="productChart"></canvas></div>
+  </figure>
+  <figure class="chart">
+    <figcaption>Revenue by region</figcaption>
+    <div class="canvas-box"><canvas id="regionChart"></canvas></div>
+  </figure>
+  <figure class="chart">
+    <figcaption>Revenue by category</figcaption>
+    <div class="canvas-box"><canvas id="categoryChart"></canvas></div>
+  </figure>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const report = {{ report | tojson }};
+
+  const rupee = (n) => "\u20B9" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  const colors = ["#0e7c7b", "#2f6690", "#c2410c", "#7a6c2f", "#6b4e8f", "#8a8f98"];
+
+  // Key figures
+  document.getElementById("stat-revenue").textContent = rupee(report.summary.total_revenue);
+  document.getElementById("stat-units").textContent = report.summary.total_units.toLocaleString("en-IN");
+  document.getElementById("stat-orders").textContent = report.summary.orders.toLocaleString("en-IN");
+  document.getElementById("stat-aov").textContent = rupee(report.summary.avg_order_value);
+
+  const moneyAxis = { ticks: { callback: (v) => rupee(v) }, beginAtZero: true };
+  const tooltip = { callbacks: { label: (ctx) => " " + rupee(ctx.parsed.y ?? ctx.parsed.x ?? ctx.parsed) } };
+
+  new Chart(document.getElementById("monthlyChart"), {
+    type: "line",
+    data: {
+      labels: report.monthly.labels,
+      datasets: [{ data: report.monthly.values, borderColor: colors[0], backgroundColor: "rgba(14,124,123,0.12)", fill: true, tension: 0.25 }]
+    },
+    options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip }, scales: { y: moneyAxis } }
+  });
+
+  new Chart(document.getElementById("productChart"), {
+    type: "bar",
+    data: { labels: report.top_products.labels, datasets: [{ data: report.top_products.values, backgroundColor: colors[0] }] },
+    options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip }, scales: { x: moneyAxis } }
+  });
+
+  new Chart(document.getElementById("regionChart"), {
+    type: "bar",
+    data: { labels: report.regions.labels, datasets: [{ data: report.regions.values, backgroundColor: colors[1] }] },
+    options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip }, scales: { y: moneyAxis } }
+  });
+
+  new Chart(document.getElementById("categoryChart"), {
+    type: "doughnut",
+    data: { labels: report.categories.labels, datasets: [{ data: report.categories.values, backgroundColor: colors }] },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "right" }, tooltip: { callbacks: { label: (ctx) => " " + ctx.label + ": " + rupee(ctx.parsed) } } }
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Upload data | Sales Data Analysis System{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Upload sales data</h1>
+    <p class="muted">Add a CSV file and the dashboard will update with your numbers.</p>
+  </div>
+</section>
+
+<section class="upload-panel">
+  <form method="post" enctype="multipart/form-data">
+    <label for="file">CSV file</label>
+    <input type="file" id="file" name="file" accept=".csv" required>
+    <button class="button" type="submit">Upload and analyse</button>
+  </form>
+
+  <div class="format">
+    <h2>Required columns</h2>
+    <p>The first row must contain these column names:</p>
+    <pre>date,product,category,region,quantity,price
+2025-07-02,Laptop,Electronics,South,2,55000</pre>
+    <p class="muted">Dates use the format YYYY-MM-DD. Quantity and price must be numbers.</p>
+  </div>
+</section>
+{% endblock %}
