@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block title %}Overview{% endblock %}{% block heading %}Overview{% endblock %}
+{% block content %}
+<div class="page-intro"><div><div class="eyebrow">YOUR BUSINESS AT A GLANCE</div><h1>Sales overview</h1><p>Track revenue, orders and performance across your business.</p></div><a class="btn btn-outline" href="{{ url_for('export_csv', **filters) }}">↓ Export CSV</a></div>
+<form class="filter-bar" method="get"><div class="filter-title">Filter results</div><label>From<input type="date" name="start" value="{{ filters.start }}"></label><label>To<input type="date" name="end" value="{{ filters.end }}"></label><label>Region<select name="region"><option value="">All regions</option>{% for r in regions %}<option value="{{ r }}" {{ 'selected' if filters.region==r else '' }}>{{ r }}</option>{% endfor %}</select></label><label>Category<select name="category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c }}" {{ 'selected' if filters.category==c else '' }}>{{ c }}</option>{% endfor %}</select></label><button class="btn">Apply filters</button><a class="clear-link" href="{{ url_for('dashboard') }}">Clear</a></form>
+<div class="kpi-grid">
+ <article class="kpi"><div class="kpi-top"><span>Total revenue</span><span class="kpi-icon teal">₹</span></div><strong>₹{{ "{:,.0f}".format(report.summary.total_revenue) }}</strong><small>Across selected sales</small></article>
+ <article class="kpi"><div class="kpi-top"><span>Units sold</span><span class="kpi-icon blue">▥</span></div><strong>{{ "{:,}".format(report.summary.total_units) }}</strong><small>Total quantity sold</small></article>
+ <article class="kpi"><div class="kpi-top"><span>Orders</span><span class="kpi-icon violet">▤</span></div><strong>{{ "{:,}".format(report.summary.orders) }}</strong><small>Sales transactions</small></article>
+ <article class="kpi"><div class="kpi-top"><span>Average order value</span><span class="kpi-icon amber">↗</span></div><strong>₹{{ "{:,.0f}".format(report.summary.avg_order_value) }}</strong><small>Revenue per order</small></article>
+</div>
+<div class="section-heading"><div><h2>Performance analytics</h2><p>{{ report.summary.date_from }} — {{ report.summary.date_to }}</p></div></div>
+<div class="chart-grid">
+ <article class="panel chart-panel span-2"><div class="panel-head"><div><h3>Revenue trend</h3><p>Monthly revenue over time</p></div><span class="panel-tag">MONTHLY</span></div><div class="chart-wrap tall"><canvas id="monthlyChart"></canvas></div></article>
+ <article class="panel chart-panel"><div class="panel-head"><div><h3>Top products</h3><p>Revenue by product</p></div></div><div class="chart-wrap"><canvas id="productChart"></canvas></div></article>
+ <article class="panel chart-panel"><div class="panel-head"><div><h3>Regional performance</h3><p>Revenue contribution</p></div></div><div class="chart-wrap"><canvas id="regionChart"></canvas></div></article>
+ <article class="panel chart-panel span-2"><div class="panel-head"><div><h3>Category mix</h3><p>Share of revenue by category</p></div></div><div class="chart-wrap"><canvas id="categoryChart"></canvas></div></article>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const R={{ report|tojson }};
+const money=v=>'₹'+Number(v).toLocaleString('en-IN',{maximumFractionDigits:0});
+const grid={color:'rgba(148,163,184,.16)'};
+const common={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+money(c.parsed.y??c.parsed.x??c.parsed)}}}};
+new Chart(document.getElementById('monthlyChart'),{type:'line',data:{labels:R.monthly.labels,datasets:[{data:R.monthly.values,borderColor:'#12a89d',backgroundColor:'rgba(18,168,157,.12)',fill:true,tension:.36,borderWidth:3,pointRadius:3,pointBackgroundColor:'#fff',pointBorderWidth:2}]},options:{...common,scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid,ticks:{callback:money}}}}});
+new Chart(document.getElementById('productChart'),{type:'bar',data:{labels:R.products.labels,datasets:[{data:R.products.values,backgroundColor:'#4c7cf3',borderRadius:6,barThickness:18}]},options:{...common,indexAxis:'y',scales:{x:{beginAtZero:true,grid,ticks:{callback:money}},y:{grid:{display:false}}}}});
+new Chart(document.getElementById('regionChart'),{type:'bar',data:{labels:R.regions.labels,datasets:[{data:R.regions.values,backgroundColor:'#8b72e8',borderRadius:6}]},options:{...common,scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid,ticks:{callback:money}}}}});
+new Chart(document.getElementById('categoryChart'),{type:'doughnut',data:{labels:R.categories.labels,datasets:[{data:R.categories.values,backgroundColor:['#12a89d','#4c7cf3','#8b72e8','#f2a94a','#e87979'],borderWidth:0,hoverOffset:7}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'right',labels:{usePointStyle:true,boxWidth:8,padding:18}},tooltip:{callbacks:{label:c=>' '+c.label+': '+money(c.parsed)}}}}});
+</script>{% endblock %}

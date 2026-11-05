@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SalesLens{% endblock %} · SalesLens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">S</span><span>SalesLens<small>ANALYTICS WORKSPACE</small></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <nav>
+      <a class="{{ 'active' if request.endpoint=='dashboard' else '' }}" href="{{ url_for('dashboard') }}">◫ <span>Overview</span></a>
+      <a class="{{ 'active' if request.endpoint=='insights_page' else '' }}" href="{{ url_for('insights_page') }}">⌁ <span>Insights</span></a>
+      <a class="{{ 'active' if request.endpoint=='sales_page' else '' }}" href="{{ url_for('sales_page') }}">▤ <span>Sales records</span></a>
+    </nav>
+    <div class="nav-label">DATA MANAGEMENT</div>
+    <nav>
+      {% if is_admin %}
+      <a class="{{ 'active' if request.endpoint=='upload' else '' }}" href="{{ url_for('upload') }}">⇧ <span>Upload data</span></a>
+      <form method="post" action="{{ url_for('admin_logout') }}"><button class="nav-button">↪ <span>Sign out</span></button></form>
+      {% else %}
+      <a href="{{ url_for('admin_login') }}">▣ <span>Admin sign in</span></a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-bottom"><span class="status-dot"></span> System online <small>Sales intelligence platform</small></div>
+  </aside>
+  <main class="main-area">
+    <header class="topbar"><div><span class="eyebrow">SALES PERFORMANCE</span><strong>{% block heading %}Overview{% endblock %}</strong></div><div class="top-actions"><span class="source-pill">{{ data_source }}</span><span class="avatar">{{ 'A' if is_admin else 'S' }}</span></div></header>
+    <section class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
+      {% block content %}{% endblock %}
+      <footer>SalesLens <span>·</span> Sales Data Analysis System</footer>
+    </section>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% block scripts %}{% endblock %}
+</body></html>
